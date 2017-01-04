@@ -1,6 +1,9 @@
 package main
 
+// #include <sys/ioctl.h>
 // #include <btrfs/send-stream.h>
+// #include <btrfs/send-utils.h>
+// #include <fcntl.h>
 // #cgo LDFLAGS: -lbtrfs
 // //BEGIN </tmp/btrfs_hdr perl -ne '/^\tint/ || next; /\tint \(\*(.*)\)\((.*)\);/; ($n, $a) = ($1, $2); $o="extern int cb_$n($a);"; $o =~ s/const //g; $o .= "\nstatic int cb_$n"."1($a) {\n"; $a =~ s/(^|, )const ((?:struct )?\w+)(?:( \*)?| )(\w+)(?=,|$)/$1($2$3)$4/g; $a =~ s/(^|, )((?:struct )?\w+)(?:( \*)?| )(\w+)(?=,|$)/$1$4/g; $o .= "\treturn cb_$n($a);\n}\n\n"; print "$o";'|sed 's/^/\/\/ /'
 // extern int cb_subvol(char *path, u8 *uuid, u64 ctransid, void *user);
@@ -138,6 +141,7 @@ import "C"
 import "os"
 import "fmt"
 import "unsafe"
+import "syscall"
 
 // NAUGHTYNESS:
 // For a recursive delete, we get a rename, then a delete on the renamed copy.
@@ -275,18 +279,69 @@ func cb_update_extent(path *C.char, offset C.u64, len C.u64, user unsafe.Pointer
 	return 0
 }
 // END paste
-
+func btrfs_read_and_process_send_stream(fd C.int, ops *C.struct_btrfs_send_ops, count unsafe.Pointer, channel chan struct{}) {
+	ret, err := C.btrfs_read_and_process_send_stream(fd, ops, count, 1, 10)
+	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v %v\n", ret, err)
+	channel <- struct {}{}
+}
 func main() {
 	send_ops := C.struct_btrfs_send_ops {}
 	C.setup(&send_ops);
-	count := 0
-	ret := C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	if ret < 0 {
-		fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v\n", ret)
+	read, write, err := os.Pipe()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "pipe returned %v\n", err)
 		os.Exit(1)
 	}
+	count := 0
+
+	root := "/disks/ssdbtrfs"
+	parent := "/disks/ssdbtrfs/bucko/test2"
+	child := "/disks/ssdbtrfs/bucko/test3"
+	root_f, err := os.OpenFile(root, os.O_RDONLY, 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "open returned %v\n", err)
+		os.Exit(1)
+	}
+	subvol_f, err := os.OpenFile(child, os.O_RDONLY, 0777)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "open returned %v\n", err)
+		os.Exit(1)
+	}
+	var sus C.struct_subvol_uuid_search
+	var subvol_info *C.struct_subvol_info
+	r := C.subvol_uuid_search_init(C.int(root_f.Fd()), &sus)
+	if r < 0 {
+		fmt.Fprintf(os.Stderr, "subvol_uuid_search_init returned %v\n", r)
+		os.Exit(1)
+	}
+	subvol_info, err = C.subvol_uuid_search(&sus, 0, nil, 0, C.CString(parent), C.subvol_search_by_path)
+	if subvol_info == nil {
+		fmt.Fprintf(os.Stderr, "subvol_uuid_search returned %v\n", err)
+		os.Exit(1)
+	}
+	var root_id C.__u64 = C.__u64(subvol_info.root_id)
+	fmt.Fprintf(os.Stderr, "root_id %v\n", root_id)
+	//subvol_info = C.subvol_uuid_search(&sus, root_id, nil, 0, nil, C.subvol_search_by_root_id)
+	var subvol_fd C.uint = C.uint(subvol_f.Fd())
+
+	var opts C.struct_btrfs_ioctl_send_args
+	opts.send_fd = C.__s64(write.Fd())
+	opts.clone_sources = &root_id
+	opts.clone_sources_count = 1
+	opts.parent_root = root_id
+	opts.flags = 0 //C.BTRFS_SEND_FLAG_NO_FILE_DATA
+	channel := make(chan struct{})
+	go btrfs_read_and_process_send_stream(C.int(read.Fd()), &send_ops, unsafe.Pointer(&count), channel)
+	r1, r2, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
+	fmt.Fprintf(os.Stderr, "ioctl returns %v %v %v\n", r1, r2, err)
+	<-channel
+
+	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
+	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
+	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
+	//if ret < 0 {
+	//	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v\n", ret)
+	//	os.Exit(1)
+	//}
 	fmt.Fprintf(os.Stdout, "total length=%v\n", count)
 }
