@@ -166,80 +166,80 @@ func cb_snapshot(path *C.char, uuid *C.u8, ctransid C.u64, parent_uuid *C.u8, pa
 //export cb_mkfile
 func cb_mkfile(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkfile: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mkdir
 func cb_mkdir(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkdir: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mknod
 func cb_mknod(path *C.char, mode C.u64, dev C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mknod: %v %v %v\n", C.GoString(path), mode, dev)
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mkfifo
 func cb_mkfifo(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkfifo: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mksock
 func cb_mksock(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mksock: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_symlink
 func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "symlink: %v %v\n", C.GoString(path), C.GoString(lnk))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_rename
 func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "rename: %v %v\n", C.GoString(from), C.GoString(to))
-	var node *Node = (*Node)(user)
-	node.rename(C.GoString(from), C.GoString(to))
+	var diff *Diff = (*Diff)(user)
+	diff.rename(C.GoString(from), C.GoString(to))
 	return 0
 }
 
 //export cb_link
 func cb_link(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "link: %v %v\n", C.GoString(path), C.GoString(lnk))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "added")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_unlink
 func cb_unlink(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "unlink: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "deleted")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "deleted")
 	return 0
 }
 
 //export cb_rmdir
 func cb_rmdir(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "rmdir: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "deleted")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "deleted")
 	return 0
 }
 
@@ -252,64 +252,64 @@ func cb_write(path *C.char, data unsafe.Pointer, offset C.u64, len C.u64, user u
 //export cb_clone
 func cb_clone(path *C.char, offset C.u64, len C.u64, clone_uuid *C.u8, clone_ctransid C.u64, clone_path *C.char, clone_offset C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_set_xattr
 func cb_set_xattr(path *C.char, name *C.char, data unsafe.Pointer, len C.int, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v %v\n", C.GoString(path), C.GoString(name))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_remove_xattr
 func cb_remove_xattr(path *C.char, name *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "remove_xattr: %v %v\n", C.GoString(path), C.GoString(name))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_truncate
 func cb_truncate(path *C.char, size C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "truncate: %v %v\n", C.GoString(path), size)
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_chmod
 func cb_chmod(path *C.char, mode C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "chmod: %v %v\n", C.GoString(path), mode)
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_chown
 func cb_chown(path *C.char, uid C.u64, gid C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "chown: %v %v %v\n", C.GoString(path), uid, gid)
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_utimes
 func cb_utimes(path *C.char, at *C.struct_timespec, mt *C.struct_timespec, ct *C.struct_timespec, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "utimes: %v\n", C.GoString(path))
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_update_extent
 func cb_update_extent(path *C.char, offset C.u64, len C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "update_extent: %v %v %v\n", C.GoString(path), offset, len)
-	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(path), "changed")
+	var diff *Diff = (*Diff)(user)
+	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
 // END paste
@@ -325,39 +325,72 @@ type Node struct {
 	Name string
 	ChangeType string
 	Parent *Node
+	Original *Node
 }
 
-func (node *Node)tagFile(path string, changeType string) {
-	fileNode := node.find(path)
-	if fileNode.ChangeType == "added" && changeType == "deleted" {
+type Diff struct {
+	Original Node
+	New Node
+}
+
+func (diff *Diff)tagFile(path string, changeType string) {
+	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", changeType, path)
+	fileNode := diff.find(path, changeType == "added")
+	if changeType == "deleted" {
+		if fileNode.Original == nil {
+			fmt.Fprintf(os.Stderr, "deleting path %v which was created in same diff?\n")
+		}
 		delete(fileNode.Parent.Children, fileNode.Name)
-	} else {
+	} else if fileNode.Original != nil {
 		fileNode.ChangeType = changeType
 	}
-	fmt.Fprintf(os.Stderr, "intermediate=%v\n", node)
-}
-
-func (node *Node)rename(from string, to string) {
-	fromNode := node.find(from)
-	delete(fromNode.Parent.Children, fromNode.Name)
-	if fromNode.ChangeType != "added" {
-		node.find(from).ChangeType = "deleted"
-	} else {
-		// Need to recursively delete deletes from fromNode?
+	if changeType == "deleted" {
+		// If we deleted /this/ node, it sure as hell needs no children.
+		fileNode.Children = nil
+		if fileNode.Original != nil {
+			// Leave behind a sentinel in the Original structure.
+			fileNode.Original.ChangeType = "deleted"
+			fileNode.Original.verifyDelete(path)
+			fileNode.Original.Children = nil
+		}
 	}
-	toNode := node.find(to)
-	toNode.Parent.Children[toNode.Name] = fromNode
-	toNode.ChangeType = "added"
-	fmt.Fprintf(os.Stderr, "intermediate=%v\n", node)
+	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (node *Node)find(path string) *Node {
+func (node *Node)verifyDelete(path string) {
+	for _, child := range node.Children {
+		if child.ChangeType != "deleted" && child.ChangeType != "renamed" {
+			fmt.Fprintf(os.Stderr, "deleting parent of node %v in %v which is not gone", node, path)
+		}
+	}
+}
+
+func (diff *Diff)rename(from string, to string) {
+	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename", from)
+	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename_to", to)
+	fromNode := diff.find(from, false)
+	delete(fromNode.Parent.Children, fromNode.Name)
+	if fromNode.Original != nil {
+		// if fromNode had an original, we must mark that path destroyed.
+		fromNode.Original.ChangeType = "renamed"
+	}
+	toNode := diff.find(to, true)
+	toNode.Parent.Children[toNode.Name] = fromNode
+	fromNode.Name = toNode.Name
+	fromNode.ChangeType = "added"
+	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
+}
+
+func (diff *Diff)find(path string, isNew bool) *Node {
+	if diff.New.Original == nil {
+		diff.New.Original = &diff.Original
+	}
 	if path == "" {
-		return node
+		return &diff.New
 	}
 	parts := strings.Split(path, "/")
-	current := node
-	for _, part := range parts {
+	current := &diff.New
+	for i, part := range parts {
 		if current.Children == nil {
 			current.Children = make(map[string]*Node)
 		}
@@ -365,8 +398,35 @@ func (node *Node)find(path string) *Node {
 		if newNode == nil {
 			current.Children[part] = &Node{}
 			newNode = current.Children[part]
+			original := current.Original
+			if original == nil {
+				if !(isNew && i == len(parts) - 1) {
+					// Either a path has a route in the original, or it's been
+					// explicitly created. Once we traverse into a path without
+					// an original, we know the full tree, so getting here is a
+					// sign we did it wrong.
+					fmt.Fprintf(os.Stderr, "referenced path %v cannot exist\n", path)
+					os.Exit(1)
+				}
+			} else {
+				if original.Children == nil {
+					original.Children = make(map[string]*Node)
+				}
+				if !isNew || i < len(parts) - 1 {
+					// Was meant to already exist, so make sure it did!
+					original.Children[part] = &Node{}
+					newOriginal := original.Children[part]
+					newOriginal.Name = part
+					newOriginal.Parent = original
+					newNode.Original = newOriginal
+				}
+			}
 			newNode.Name = part
-			newNode.Parent = node
+			newNode.Parent = current
+		} else if isNew && i == len(parts) - 1 {
+			// As this is the target of a create, we should expect to see
+			// nothing here.
+			fmt.Fprintf(os.Stderr, "overwritten path %v already existed\n", path)
 		}
 		current = newNode
 	}
@@ -375,6 +435,50 @@ func (node *Node)find(path string) *Node {
 
 func (node *Node)String() string {
 	return fmt.Sprintf("(%v, %v)", node.Children, node.ChangeType)
+}
+
+func (diff *Diff)String() string {
+	return "\n\t" + strings.Join((diff.Changes())[:], "\n\t") + "\n"
+}
+
+func (diff *Diff)Changes() []string {
+	newFiles := make(map [string]*Node)
+	oldFiles := make(map [string]*Node)
+	changes(&diff.New, "", newFiles)
+	changes(&diff.Original, "", oldFiles)
+//	fmt.Fprintf(os.Stderr, "new: %v\n%v\n", newFiles, &diff.New)
+//	fmt.Fprintf(os.Stderr, "old: %v\n%v\n", oldFiles, &diff.Original)
+	var ret []string
+	for name, node := range oldFiles {
+		if newFiles[name] != nil && node.ChangeType == "" {
+			if node.Children == nil {
+				// TODO diff equality only
+				ret = append(ret, fmt.Sprintf("%10v: %v", "changed", name))
+			}
+			delete(newFiles, name)
+		} else {
+			if node.ChangeType != "deleted" && node.ChangeType != "renamed" {
+				fmt.Fprintf(os.Stderr, "unexpected ChangeType on original %v: %v", name, node.ChangeType)
+			}
+			ret = append(ret, fmt.Sprintf("%10v: %v", node.ChangeType, name))
+		}
+	}
+	for name := range newFiles {
+		ret = append(ret, fmt.Sprintf("%10v: %v", "added", name))
+	}
+	return ret
+}
+
+func changes(node *Node, prefix string, ret map[string]*Node) {
+	newPrefix := prefix + node.Name
+	ret[newPrefix] = node
+	if node.ChangeType == "added" {
+		// TODO diff equality only
+		return
+	}
+	for _, child := range node.Children {
+		changes(child, newPrefix + "/", ret)
+	}
 }
 
 func main() {
@@ -390,8 +494,8 @@ func main() {
 	// need to distinguish an ChangeAdd vs ChangeModify
 
 	root := "/disks/ssdbtrfs"
-	parent := "/disks/ssdbtrfs/bucko/test6"
-	child := "/disks/ssdbtrfs/bucko/test3"
+	parent := os.Args[1]
+	child := os.Args[2]
 	root_f, err := os.OpenFile(root, os.O_RDONLY, 0777)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open returned %v\n", err)
@@ -426,8 +530,8 @@ func main() {
 	opts.parent_root = root_id
 	opts.flags = C.BTRFS_SEND_FLAG_NO_FILE_DATA
 	channel := make(chan struct{})
-	var node Node = Node{}
-	go btrfs_read_and_process_send_stream(C.int(read.Fd()), &send_ops, unsafe.Pointer(&node), channel)
+	var diff Diff = Diff{}
+	go btrfs_read_and_process_send_stream(C.int(read.Fd()), &send_ops, unsafe.Pointer(&diff), channel)
 	r1, r2, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
 	fmt.Fprintf(os.Stderr, "ioctl returns %v %v %v\n", r1, r2, err)
 	<-channel
@@ -439,5 +543,5 @@ func main() {
 	//	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v\n", ret)
 	//	os.Exit(1)
 	//}
-	fmt.Fprintf(os.Stdout, "generated=%v\n", node)
+	fmt.Fprintf(os.Stdout, "TRACE GENERATED\nTRACE %v\n", strings.Join(diff.Changes(), "\nTRACE "))
 }
