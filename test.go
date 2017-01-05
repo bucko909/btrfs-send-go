@@ -215,8 +215,7 @@ func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "rename: %v %v\n", C.GoString(from), C.GoString(to))
 	var node *Node = (*Node)(user)
-	node.tagFile(C.GoString(from), "deleted")
-	node.tagFile(C.GoString(to), "added")
+	node.rename(C.GoString(from), C.GoString(to))
 	return 0
 }
 
@@ -330,16 +329,26 @@ type Node struct {
 
 func (node *Node)tagFile(path string, changeType string) {
 	fileNode := node.find(path)
-	fileNode.ChangeType = changeType
+	if fileNode.ChangeType == "added" && changeType == "deleted" {
+		delete(fileNode.Parent.Children, fileNode.Name)
+	} else {
+		fileNode.ChangeType = changeType
+	}
+	fmt.Fprintf(os.Stderr, "intermediate=%v\n", node)
 }
 
 func (node *Node)rename(from string, to string) {
 	fromNode := node.find(from)
 	delete(fromNode.Parent.Children, fromNode.Name)
-	node.find(from).ChangeType = "deleted"
+	if fromNode.ChangeType != "added" {
+		node.find(from).ChangeType = "deleted"
+	} else {
+		// Need to recursively delete deletes from fromNode?
+	}
 	toNode := node.find(to)
 	toNode.Parent.Children[toNode.Name] = fromNode
-	fromNode.ChangeType = "added"
+	toNode.ChangeType = "added"
+	fmt.Fprintf(os.Stderr, "intermediate=%v\n", node)
 }
 
 func (node *Node)find(path string) *Node {
