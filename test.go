@@ -142,6 +142,7 @@ import "os"
 import "fmt"
 import "unsafe"
 import "syscall"
+import "strings"
 
 // NAUGHTYNESS:
 // For a recursive delete, we get a rename, then a delete on the renamed copy.
@@ -165,125 +166,208 @@ func cb_snapshot(path *C.char, uuid *C.u8, ctransid C.u64, parent_uuid *C.u8, pa
 //export cb_mkfile
 func cb_mkfile(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkfile: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mkdir
 func cb_mkdir(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkdir: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mknod
 func cb_mknod(path *C.char, mode C.u64, dev C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mknod: %v %v %v\n", C.GoString(path), mode, dev)
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mkfifo
 func cb_mkfifo(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mkfifo: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_mksock
 func cb_mksock(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "mksock: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_symlink
 func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "symlink: %v %v\n", C.GoString(path), C.GoString(lnk))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_rename
 func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "rename: %v %v\n", C.GoString(from), C.GoString(to))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(from), "deleted")
+	node.tagFile(C.GoString(to), "added")
 	return 0
 }
 
 //export cb_link
 func cb_link(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "link: %v %v\n", C.GoString(path), C.GoString(lnk))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "added")
 	return 0
 }
 
 //export cb_unlink
 func cb_unlink(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "unlink: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "deleted")
 	return 0
 }
 
 //export cb_rmdir
 func cb_rmdir(path *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "rmdir: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "deleted")
 	return 0
 }
 
 //export cb_write
 func cb_write(path *C.char, data unsafe.Pointer, offset C.u64, len C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "write: %v %v\n", C.GoString(path), len)
-	var count *int
-	count = (*int)(user)
-	*count += int(len)
-	return 0
+	return -1 // Should not happen
 }
 
 //export cb_clone
 func cb_clone(path *C.char, offset C.u64, len C.u64, clone_uuid *C.u8, clone_ctransid C.u64, clone_path *C.char, clone_offset C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_set_xattr
 func cb_set_xattr(path *C.char, name *C.char, data unsafe.Pointer, len C.int, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v %v\n", C.GoString(path), C.GoString(name))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_remove_xattr
 func cb_remove_xattr(path *C.char, name *C.char, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "remove_xattr: %v %v\n", C.GoString(path), C.GoString(name))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_truncate
 func cb_truncate(path *C.char, size C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "truncate: %v %v\n", C.GoString(path), size)
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_chmod
 func cb_chmod(path *C.char, mode C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "chmod: %v %v\n", C.GoString(path), mode)
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_chown
 func cb_chown(path *C.char, uid C.u64, gid C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "chown: %v %v %v\n", C.GoString(path), uid, gid)
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_utimes
 func cb_utimes(path *C.char, at *C.struct_timespec, mt *C.struct_timespec, ct *C.struct_timespec, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "utimes: %v\n", C.GoString(path))
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 
 //export cb_update_extent
 func cb_update_extent(path *C.char, offset C.u64, len C.u64, user unsafe.Pointer) (C.int) {
 	fmt.Fprintf(os.Stderr, "update_extent: %v %v %v\n", C.GoString(path), offset, len)
+	var node *Node = (*Node)(user)
+	node.tagFile(C.GoString(path), "changed")
 	return 0
 }
 // END paste
-func btrfs_read_and_process_send_stream(fd C.int, ops *C.struct_btrfs_send_ops, count unsafe.Pointer, channel chan struct{}) {
-	ret, err := C.btrfs_read_and_process_send_stream(fd, ops, count, 1, 10)
+
+func btrfs_read_and_process_send_stream(fd C.int, ops *C.struct_btrfs_send_ops, user unsafe.Pointer, channel chan struct{}) {
+	ret, err := C.btrfs_read_and_process_send_stream(fd, ops, user, 1, 0)
 	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v %v\n", ret, err)
 	channel <- struct {}{}
 }
+
+type Node struct {
+	Children map[string]*Node
+	Name string
+	ChangeType string
+	Parent *Node
+}
+
+func (node *Node)tagFile(path string, changeType string) {
+	fileNode := node.find(path)
+	fileNode.ChangeType = changeType
+}
+
+func (node *Node)rename(from string, to string) {
+	fromNode := node.find(from)
+	delete(fromNode.Parent.Children, fromNode.Name)
+	node.find(from).ChangeType = "deleted"
+	toNode := node.find(to)
+	toNode.Parent.Children[toNode.Name] = fromNode
+	fromNode.ChangeType = "added"
+}
+
+func (node *Node)find(path string) *Node {
+	if path == "" {
+		return node
+	}
+	parts := strings.Split(path, "/")
+	current := node
+	for _, part := range parts {
+		if current.Children == nil {
+			current.Children = make(map[string]*Node)
+		}
+		newNode := current.Children[part]
+		if newNode == nil {
+			current.Children[part] = &Node{}
+			newNode = current.Children[part]
+			newNode.Name = part
+			newNode.Parent = node
+		}
+		current = newNode
+	}
+	return current
+}
+
+func (node *Node)String() string {
+	return fmt.Sprintf("(%v, %v)", node.Children, node.ChangeType)
+}
+
 func main() {
 	send_ops := C.struct_btrfs_send_ops {}
 	C.setup(&send_ops);
@@ -292,10 +376,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "pipe returned %v\n", err)
 		os.Exit(1)
 	}
-	count := 0
+
+	// I need to output, in tree order, an array of Change objects.
+	// need to distinguish an ChangeAdd vs ChangeModify
 
 	root := "/disks/ssdbtrfs"
-	parent := "/disks/ssdbtrfs/bucko/test2"
+	parent := "/disks/ssdbtrfs/bucko/test6"
 	child := "/disks/ssdbtrfs/bucko/test3"
 	root_f, err := os.OpenFile(root, os.O_RDONLY, 0777)
 	if err != nil {
@@ -329,9 +415,10 @@ func main() {
 	opts.clone_sources = &root_id
 	opts.clone_sources_count = 1
 	opts.parent_root = root_id
-	opts.flags = 0 //C.BTRFS_SEND_FLAG_NO_FILE_DATA
+	opts.flags = C.BTRFS_SEND_FLAG_NO_FILE_DATA
 	channel := make(chan struct{})
-	go btrfs_read_and_process_send_stream(C.int(read.Fd()), &send_ops, unsafe.Pointer(&count), channel)
+	var node Node = Node{}
+	go btrfs_read_and_process_send_stream(C.int(read.Fd()), &send_ops, unsafe.Pointer(&node), channel)
 	r1, r2, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
 	fmt.Fprintf(os.Stderr, "ioctl returns %v %v %v\n", r1, r2, err)
 	<-channel
@@ -343,5 +430,5 @@ func main() {
 	//	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v\n", ret)
 	//	os.Exit(1)
 	//}
-	fmt.Fprintf(os.Stdout, "total length=%v\n", count)
+	fmt.Fprintf(os.Stdout, "generated=%v\n", node)
 }
