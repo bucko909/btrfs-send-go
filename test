@@ -19,7 +19,9 @@ echo foo > foo_file
 mkdir bar
 mv foo_file bar
 echo baz > bar/baz_file
+ln bar/baz_file bar/baaz_file
 mv bar/baz_file bar/foo_file
+rm bar/foo_file
 rm -rf bar
 END
 ) | while read command; do
