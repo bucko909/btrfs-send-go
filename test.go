@@ -341,8 +341,10 @@ func (diff *Diff)tagFile(path string, changeType string) {
 			fmt.Fprintf(os.Stderr, "deleting path %v which was created in same diff?\n")
 		}
 		delete(fileNode.Parent.Children, fileNode.Name)
-	} else if fileNode.Original != nil {
-		fileNode.ChangeType = changeType
+	} else { // Why this? if fileNode.Original != nil {
+		if !(fileNode.ChangeType == "added" && changeType == "changed") {
+			fileNode.ChangeType = changeType
+		}
 	}
 	if changeType == "deleted" {
 		// If we deleted /this/ node, it sure as hell needs no children.
@@ -378,6 +380,7 @@ func (diff *Diff)rename(from string, to string) {
 	toNode.Parent.Children[toNode.Name] = fromNode
 	fromNode.Name = toNode.Name
 	fromNode.ChangeType = "added"
+	fromNode.Parent = toNode.Parent
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
@@ -412,13 +415,17 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 				if original.Children == nil {
 					original.Children = make(map[string]*Node)
 				}
-				if !isNew || i < len(parts) - 1 {
-					// Was meant to already exist, so make sure it did!
-					original.Children[part] = &Node{}
-					newOriginal := original.Children[part]
-					newOriginal.Name = part
-					newOriginal.Parent = original
-					newNode.Original = newOriginal
+				newOriginal := original.Children[part]
+				if newOriginal == nil {
+					if !isNew || i < len(parts) - 1 {
+						fmt.Fprintf(os.Stderr, "ACK %v %v %v %v %v\n", original, isNew, path, part, newOriginal)
+						// Was meant to already exist, so make sure it did!
+						original.Children[part] = &Node{}
+						newOriginal = original.Children[part]
+						newOriginal.Name = part
+						newOriginal.Parent = original
+						newNode.Original = newOriginal
+					}
 				}
 			}
 			newNode.Name = part
@@ -434,7 +441,7 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 }
 
 func (node *Node)String() string {
-	return fmt.Sprintf("(%v, %v)", node.Children, node.ChangeType)
+	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.ChangeType, node.Name)
 }
 
 func (diff *Diff)String() string {
@@ -446,8 +453,8 @@ func (diff *Diff)Changes() []string {
 	oldFiles := make(map [string]*Node)
 	changes(&diff.New, "", newFiles)
 	changes(&diff.Original, "", oldFiles)
-//	fmt.Fprintf(os.Stderr, "new: %v\n%v\n", newFiles, &diff.New)
-//	fmt.Fprintf(os.Stderr, "old: %v\n%v\n", oldFiles, &diff.Original)
+	fmt.Fprintf(os.Stderr, "new: %v\n%v\n", newFiles, &diff.New)
+	fmt.Fprintf(os.Stderr, "old: %v\n%v\n", oldFiles, &diff.Original)
 	var ret []string
 	for name, node := range oldFiles {
 		if newFiles[name] != nil && node.ChangeType == "" {
@@ -460,7 +467,13 @@ func (diff *Diff)Changes() []string {
 			if node.ChangeType != "deleted" && node.ChangeType != "renamed" {
 				fmt.Fprintf(os.Stderr, "unexpected ChangeType on original %v: %v", name, node.ChangeType)
 			}
-			ret = append(ret, fmt.Sprintf("%10v: %v", node.ChangeType, name))
+			if (node.ChangeType == "deleted" || node.ChangeType == "renamed") && newFiles[name] != nil && newFiles[name].ChangeType == "added" {
+				ret = append(ret, fmt.Sprintf("%10v: %v", "changed", name))
+				delete(newFiles, name)
+			} else {
+				//fmt.Fprintf(os.Stderr, "DEBUG DEBUG %v %v %v\n ", node.ChangeType, newFiles[name], name)
+				ret = append(ret, fmt.Sprintf("%10v: %v", node.ChangeType, name))
+			}
 		}
 	}
 	for name := range newFiles {
