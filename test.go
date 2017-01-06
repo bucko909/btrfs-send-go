@@ -10,102 +10,102 @@ package main
 // static int cb_subvol1(const char *path, const u8 *uuid, u64 ctransid, void *user) {
 // 	return cb_subvol((char *)path, (u8 *)uuid, ctransid, user);
 // }
-// 
+//
 // extern int cb_snapshot(char *path, u8 *uuid, u64 ctransid, u8 *parent_uuid, u64 parent_ctransid, void *user);
 // static int cb_snapshot1(const char *path, const u8 *uuid, u64 ctransid, const u8 *parent_uuid, u64 parent_ctransid, void *user) {
 // 	return cb_snapshot((char *)path, (u8 *)uuid, ctransid, (u8 *)parent_uuid, parent_ctransid, user);
 // }
-// 
+//
 // extern int cb_mkfile(char *path, void *user);
 // static int cb_mkfile1(const char *path, void *user) {
 // 	return cb_mkfile((char *)path, user);
 // }
-// 
+//
 // extern int cb_mkdir(char *path, void *user);
 // static int cb_mkdir1(const char *path, void *user) {
 // 	return cb_mkdir((char *)path, user);
 // }
-// 
+//
 // extern int cb_mknod(char *path, u64 mode, u64 dev, void *user);
 // static int cb_mknod1(const char *path, u64 mode, u64 dev, void *user) {
 // 	return cb_mknod((char *)path, mode, dev, user);
 // }
-// 
+//
 // extern int cb_mkfifo(char *path, void *user);
 // static int cb_mkfifo1(const char *path, void *user) {
 // 	return cb_mkfifo((char *)path, user);
 // }
-// 
+//
 // extern int cb_mksock(char *path, void *user);
 // static int cb_mksock1(const char *path, void *user) {
 // 	return cb_mksock((char *)path, user);
 // }
-// 
+//
 // extern int cb_symlink(char *path, char *lnk, void *user);
 // static int cb_symlink1(const char *path, const char *lnk, void *user) {
 // 	return cb_symlink((char *)path, (char *)lnk, user);
 // }
-// 
+//
 // extern int cb_rename(char *from, char *to, void *user);
 // static int cb_rename1(const char *from, const char *to, void *user) {
 // 	return cb_rename((char *)from, (char *)to, user);
 // }
-// 
+//
 // extern int cb_link(char *path, char *lnk, void *user);
 // static int cb_link1(const char *path, const char *lnk, void *user) {
 // 	return cb_link((char *)path, (char *)lnk, user);
 // }
-// 
+//
 // extern int cb_unlink(char *path, void *user);
 // static int cb_unlink1(const char *path, void *user) {
 // 	return cb_unlink((char *)path, user);
 // }
-// 
+//
 // extern int cb_rmdir(char *path, void *user);
 // static int cb_rmdir1(const char *path, void *user) {
 // 	return cb_rmdir((char *)path, user);
 // }
-// 
+//
 // extern int cb_write(char *path, void *data, u64 offset, u64 len, void *user);
 // static int cb_write1(const char *path, const void *data, u64 offset, u64 len, void *user) {
 // 	return cb_write((char *)path, (void *)data, offset, len, user);
 // }
-// 
+//
 // extern int cb_clone(char *path, u64 offset, u64 len, u8 *clone_uuid, u64 clone_ctransid, char *clone_path, u64 clone_offset, void *user);
 // static int cb_clone1(const char *path, u64 offset, u64 len, const u8 *clone_uuid, u64 clone_ctransid, const char *clone_path, u64 clone_offset, void *user) {
 // 	return cb_clone((char *)path, offset, len, (u8 *)clone_uuid, clone_ctransid, (char *)clone_path, clone_offset, user);
 // }
-// 
+//
 // extern int cb_set_xattr(char *path, char *name, void *data, int len, void *user);
 // static int cb_set_xattr1(const char *path, const char *name, const void *data, int len, void *user) {
 // 	return cb_set_xattr((char *)path, (char *)name, (void *)data, len, user);
 // }
-// 
+//
 // extern int cb_remove_xattr(char *path, char *name, void *user);
 // static int cb_remove_xattr1(const char *path, const char *name, void *user) {
 // 	return cb_remove_xattr((char *)path, (char *)name, user);
 // }
-// 
+//
 // extern int cb_truncate(char *path, u64 size, void *user);
 // static int cb_truncate1(const char *path, u64 size, void *user) {
 // 	return cb_truncate((char *)path, size, user);
 // }
-// 
+//
 // extern int cb_chmod(char *path, u64 mode, void *user);
 // static int cb_chmod1(const char *path, u64 mode, void *user) {
 // 	return cb_chmod((char *)path, mode, user);
 // }
-// 
+//
 // extern int cb_chown(char *path, u64 uid, u64 gid, void *user);
 // static int cb_chown1(const char *path, u64 uid, u64 gid, void *user) {
 // 	return cb_chown((char *)path, uid, gid, user);
 // }
-// 
+//
 // extern int cb_utimes(char *path, struct timespec *at, struct timespec *mt, struct timespec *ct, void *user);
 // static int cb_utimes1(const char *path, struct timespec *at, struct timespec *mt, struct timespec *ct, void *user) {
 // 	return cb_utimes((char *)path, at, mt, ct, user);
 // }
-// 
+//
 // extern int cb_update_extent(char *path, u64 offset, u64 len, void *user);
 // static int cb_update_extent1(const char *path, u64 offset, u64 len, void *user) {
 // 	return cb_update_extent((char *)path, offset, len, user);
@@ -152,19 +152,19 @@ import "strings"
 
 // BEGIN </tmp/btrfs_hdr perl -ne '/^\tint/ || next; s/\tint \(\*(.*)\)\((.*)\);/\/\/export cb_$1\nfunc cb_$1($2) (int) {\n\treturn 0\n}\n/; s/const //g; s/\b(char|u64|int|u8|void)\b/C.$1/g; s/struct (\S+)/C.struct_$1/g; s/([( ])(C\.\S+) (\*?)(\S+)([,)])/$1$4 $3$2$5/g; print'|sed 's/\*C\.void/unsafe.Pointer/g'
 //export cb_subvol
-func cb_subvol(path *C.char, uuid *C.u8, ctransid C.u64, user unsafe.Pointer) (C.int) {
+func cb_subvol(path *C.char, uuid *C.u8, ctransid C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "subvol: %v\n", C.GoString(path))
 	return 0
 }
 
 //export cb_snapshot
-func cb_snapshot(path *C.char, uuid *C.u8, ctransid C.u64, parent_uuid *C.u8, parent_ctransid C.u64, user unsafe.Pointer) (C.int) {
+func cb_snapshot(path *C.char, uuid *C.u8, ctransid C.u64, parent_uuid *C.u8, parent_ctransid C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "snapshot: %v\n", C.GoString(path))
 	return 0
 }
 
 //export cb_mkfile
-func cb_mkfile(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_mkfile(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "mkfile: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -172,7 +172,7 @@ func cb_mkfile(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_mkdir
-func cb_mkdir(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_mkdir(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "mkdir: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -180,7 +180,7 @@ func cb_mkdir(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_mknod
-func cb_mknod(path *C.char, mode C.u64, dev C.u64, user unsafe.Pointer) (C.int) {
+func cb_mknod(path *C.char, mode C.u64, dev C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "mknod: %v %v %v\n", C.GoString(path), mode, dev)
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -188,7 +188,7 @@ func cb_mknod(path *C.char, mode C.u64, dev C.u64, user unsafe.Pointer) (C.int) 
 }
 
 //export cb_mkfifo
-func cb_mkfifo(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_mkfifo(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "mkfifo: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -196,7 +196,7 @@ func cb_mkfifo(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_mksock
-func cb_mksock(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_mksock(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "mksock: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -204,7 +204,7 @@ func cb_mksock(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_symlink
-func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
+func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "symlink: %v %v\n", C.GoString(path), C.GoString(lnk))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -212,7 +212,7 @@ func cb_symlink(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_rename
-func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) (C.int) {
+func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "rename: %v %v\n", C.GoString(from), C.GoString(to))
 	var diff *Diff = (*Diff)(user)
 	diff.rename(C.GoString(from), C.GoString(to))
@@ -220,7 +220,7 @@ func cb_rename(from *C.char, to *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_link
-func cb_link(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
+func cb_link(path *C.char, lnk *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "link: %v %v\n", C.GoString(path), C.GoString(lnk))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "added")
@@ -228,7 +228,7 @@ func cb_link(path *C.char, lnk *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_unlink
-func cb_unlink(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_unlink(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "unlink: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "deleted")
@@ -236,7 +236,7 @@ func cb_unlink(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_rmdir
-func cb_rmdir(path *C.char, user unsafe.Pointer) (C.int) {
+func cb_rmdir(path *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "rmdir: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "deleted")
@@ -244,13 +244,13 @@ func cb_rmdir(path *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_write
-func cb_write(path *C.char, data unsafe.Pointer, offset C.u64, len C.u64, user unsafe.Pointer) (C.int) {
+func cb_write(path *C.char, data unsafe.Pointer, offset C.u64, len C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "write: %v %v\n", C.GoString(path), len)
 	return -1 // Should not happen
 }
 
 //export cb_clone
-func cb_clone(path *C.char, offset C.u64, len C.u64, clone_uuid *C.u8, clone_ctransid C.u64, clone_path *C.char, clone_offset C.u64, user unsafe.Pointer) (C.int) {
+func cb_clone(path *C.char, offset C.u64, len C.u64, clone_uuid *C.u8, clone_ctransid C.u64, clone_path *C.char, clone_offset C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -258,7 +258,7 @@ func cb_clone(path *C.char, offset C.u64, len C.u64, clone_uuid *C.u8, clone_ctr
 }
 
 //export cb_set_xattr
-func cb_set_xattr(path *C.char, name *C.char, data unsafe.Pointer, len C.int, user unsafe.Pointer) (C.int) {
+func cb_set_xattr(path *C.char, name *C.char, data unsafe.Pointer, len C.int, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "set_xattr: %v %v\n", C.GoString(path), C.GoString(name))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -266,7 +266,7 @@ func cb_set_xattr(path *C.char, name *C.char, data unsafe.Pointer, len C.int, us
 }
 
 //export cb_remove_xattr
-func cb_remove_xattr(path *C.char, name *C.char, user unsafe.Pointer) (C.int) {
+func cb_remove_xattr(path *C.char, name *C.char, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "remove_xattr: %v %v\n", C.GoString(path), C.GoString(name))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -274,7 +274,7 @@ func cb_remove_xattr(path *C.char, name *C.char, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_truncate
-func cb_truncate(path *C.char, size C.u64, user unsafe.Pointer) (C.int) {
+func cb_truncate(path *C.char, size C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "truncate: %v %v\n", C.GoString(path), size)
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -282,7 +282,7 @@ func cb_truncate(path *C.char, size C.u64, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_chmod
-func cb_chmod(path *C.char, mode C.u64, user unsafe.Pointer) (C.int) {
+func cb_chmod(path *C.char, mode C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "chmod: %v %v\n", C.GoString(path), mode)
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -290,7 +290,7 @@ func cb_chmod(path *C.char, mode C.u64, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_chown
-func cb_chown(path *C.char, uid C.u64, gid C.u64, user unsafe.Pointer) (C.int) {
+func cb_chown(path *C.char, uid C.u64, gid C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "chown: %v %v %v\n", C.GoString(path), uid, gid)
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -298,7 +298,7 @@ func cb_chown(path *C.char, uid C.u64, gid C.u64, user unsafe.Pointer) (C.int) {
 }
 
 //export cb_utimes
-func cb_utimes(path *C.char, at *C.struct_timespec, mt *C.struct_timespec, ct *C.struct_timespec, user unsafe.Pointer) (C.int) {
+func cb_utimes(path *C.char, at *C.struct_timespec, mt *C.struct_timespec, ct *C.struct_timespec, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "utimes: %v\n", C.GoString(path))
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
@@ -306,34 +306,35 @@ func cb_utimes(path *C.char, at *C.struct_timespec, mt *C.struct_timespec, ct *C
 }
 
 //export cb_update_extent
-func cb_update_extent(path *C.char, offset C.u64, len C.u64, user unsafe.Pointer) (C.int) {
+func cb_update_extent(path *C.char, offset C.u64, len C.u64, user unsafe.Pointer) C.int {
 	fmt.Fprintf(os.Stderr, "update_extent: %v %v %v\n", C.GoString(path), offset, len)
 	var diff *Diff = (*Diff)(user)
 	diff.tagFile(C.GoString(path), "changed")
 	return 0
 }
+
 // END paste
 
 func btrfs_read_and_process_send_stream(fd C.int, ops *C.struct_btrfs_send_ops, user unsafe.Pointer, channel chan struct{}) {
 	ret, err := C.btrfs_read_and_process_send_stream(fd, ops, user, 1, 0)
 	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v %v\n", ret, err)
-	channel <- struct {}{}
+	channel <- struct{}{}
 }
 
 type Node struct {
-	Children map[string]*Node
-	Name string
+	Children   map[string]*Node
+	Name       string
 	ChangeType string
-	Parent *Node
-	Original *Node
+	Parent     *Node
+	Original   *Node
 }
 
 type Diff struct {
 	Original Node
-	New Node
+	New      Node
 }
 
-func (diff *Diff)tagFile(path string, changeType string) {
+func (diff *Diff) tagFile(path string, changeType string) {
 	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", changeType, path)
 	fileNode := diff.find(path, changeType == "added")
 	if changeType == "deleted" {
@@ -359,7 +360,7 @@ func (diff *Diff)tagFile(path string, changeType string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (node *Node)verifyDelete(path string) {
+func (node *Node) verifyDelete(path string) {
 	for _, child := range node.Children {
 		if child.ChangeType != "deleted" && child.ChangeType != "renamed" {
 			fmt.Fprintf(os.Stderr, "deleting parent of node %v in %v which is not gone", node, path)
@@ -367,7 +368,7 @@ func (node *Node)verifyDelete(path string) {
 	}
 }
 
-func (diff *Diff)rename(from string, to string) {
+func (diff *Diff) rename(from string, to string) {
 	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename", from)
 	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename_to", to)
 	fromNode := diff.find(from, false)
@@ -384,7 +385,7 @@ func (diff *Diff)rename(from string, to string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (diff *Diff)find(path string, isNew bool) *Node {
+func (diff *Diff) find(path string, isNew bool) *Node {
 	if diff.New.Original == nil {
 		diff.New.Original = &diff.Original
 	}
@@ -403,7 +404,7 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 			newNode = current.Children[part]
 			original := current.Original
 			if original == nil {
-				if !(isNew && i == len(parts) - 1) {
+				if !(isNew && i == len(parts)-1) {
 					// Either a path has a route in the original, or it's been
 					// explicitly created. Once we traverse into a path without
 					// an original, we know the full tree, so getting here is a
@@ -417,7 +418,7 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 				}
 				newOriginal := original.Children[part]
 				if newOriginal == nil {
-					if !isNew || i < len(parts) - 1 {
+					if !isNew || i < len(parts)-1 {
 						fmt.Fprintf(os.Stderr, "ACK %v %v %v %v %v\n", original, isNew, path, part, newOriginal)
 						// Was meant to already exist, so make sure it did!
 						original.Children[part] = &Node{}
@@ -430,7 +431,7 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 			}
 			newNode.Name = part
 			newNode.Parent = current
-		} else if isNew && i == len(parts) - 1 {
+		} else if isNew && i == len(parts)-1 {
 			// As this is the target of a create, we should expect to see
 			// nothing here.
 			fmt.Fprintf(os.Stderr, "overwritten path %v already existed\n", path)
@@ -440,17 +441,17 @@ func (diff *Diff)find(path string, isNew bool) *Node {
 	return current
 }
 
-func (node *Node)String() string {
+func (node *Node) String() string {
 	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.ChangeType, node.Name)
 }
 
-func (diff *Diff)String() string {
+func (diff *Diff) String() string {
 	return "\n\t" + strings.Join((diff.Changes())[:], "\n\t") + "\n"
 }
 
-func (diff *Diff)Changes() []string {
-	newFiles := make(map [string]*Node)
-	oldFiles := make(map [string]*Node)
+func (diff *Diff) Changes() []string {
+	newFiles := make(map[string]*Node)
+	oldFiles := make(map[string]*Node)
 	changes(&diff.New, "", newFiles)
 	changes(&diff.Original, "", oldFiles)
 	fmt.Fprintf(os.Stderr, "new: %v\n%v\n", newFiles, &diff.New)
@@ -490,13 +491,13 @@ func changes(node *Node, prefix string, ret map[string]*Node) {
 		return
 	}
 	for _, child := range node.Children {
-		changes(child, newPrefix + "/", ret)
+		changes(child, newPrefix+"/", ret)
 	}
 }
 
 func main() {
-	send_ops := C.struct_btrfs_send_ops {}
-	C.setup(&send_ops);
+	send_ops := C.struct_btrfs_send_ops{}
+	C.setup(&send_ops)
 	read, write, err := os.Pipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pipe returned %v\n", err)
