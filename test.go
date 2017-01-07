@@ -9,7 +9,6 @@ package main
 import "C"
 
 import "os"
-import "io"
 import "encoding/binary"
 import "bufio"
 import "fmt"
@@ -324,60 +323,61 @@ func (command *Command) ReadParam(expectedType int) (string, error) {
 	return ret, nil
 }
 
-func readStream(stream io.Reader, diff *Diff, channel chan error) {
+func readStream(stream *os.File, diff *Diff, channel chan error) {
+	channel <- doReadStream(stream, diff)
+}
+
+func doReadStream(stream *os.File, diff *Diff) error {
+	defer stream.Close()
 	input := bufio.NewReader(stream)
 	btrfsStreamHeader, err := input.ReadString('\x00')
 	if err != nil {
-		channel <- err
-		return
+		return err
 	}
 	if btrfsStreamHeader[:len(btrfsStreamHeader)-1] != C.BTRFS_SEND_STREAM_MAGIC {
-		channel <- fmt.Errorf("magic is %v, not %v", btrfsStreamHeader, C.BTRFS_SEND_STREAM_MAGIC)
-		return
+		return fmt.Errorf("magic is %v, not %v", btrfsStreamHeader, C.BTRFS_SEND_STREAM_MAGIC)
 	}
-	ver, err := peekAndDiscard(input, 4)
-	if err != nil || binary.LittleEndian.Uint32(ver) != 1 {
-		channel <- err
-		return
+	verB, err := peekAndDiscard(input, 4)
+	if err != nil {
+		return err
+	}
+	ver := binary.LittleEndian.Uint32(verB)
+	if ver != 1 {
+		return fmt.Errorf("Unexpected stream version %v", ver)
 	}
 	for true {
 		command, err := readCommand(input)
 		if err != nil {
-			channel <- err
-			return
+			return err
 		}
 		if command.Type.Op == OpUnspec {
-			channel <- err
-			return
+			return fmt.Errorf("Unexpected command %v", command)
 		} else if command.Type.Op == OpIgnore {
 			continue
 		} else if command.Type.Op == OpRename {
 			fromPath, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
-				channel <- err
-				return
+				return err
 			}
 			toPath, err := command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
 			if err != nil {
-				channel <- err
-				return
+				return err
 			}
 			fmt.Fprintf(os.Stdout, "TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
 			diff.rename(fromPath, toPath)
 		} else if command.Type.Op == OpEnd {
 			fmt.Fprintf(os.Stderr, "END\n")
-			channel <- nil
 			break
 		} else {
 			path, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
-				channel <- err
-				return
+				return err
 			}
 			fmt.Fprintf(os.Stdout, "TRACE %25v %v\n", command.Type.Name, path)
 			diff.tagPath(path, command.Type.Op)
 		}
 	}
+	return nil
 }
 
 func getSubvolUid(path string) (C.__u64, error) {
@@ -399,6 +399,7 @@ func getSubvolUid(path string) (C.__u64, error) {
 }
 
 func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
+	defer stream.Close()
 	subvol_f, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
 	if err != nil {
 		return fmt.Errorf("open returned %v\n", err)
