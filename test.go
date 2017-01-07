@@ -37,13 +37,13 @@ const (
 
 var names []string = []string{"!!!", "ignored", "added", "changed", "deleted", "renamed", "END"}
 
-func (op Op)String() string {
+func (op Op) String() string {
 	return names[op]
 }
 
 type CommandSpec struct {
 	Name string
-	Op Op
+	Op   Op
 }
 
 type Command struct {
@@ -90,6 +90,7 @@ func initCommands() *[C.__BTRFS_SEND_C_MAX]CommandSpec {
 	}
 	return &commands
 }
+
 var commands *[C.__BTRFS_SEND_C_MAX]CommandSpec = initCommands()
 
 type Node struct {
@@ -305,7 +306,7 @@ func readCommand(input *bufio.Reader) (*Command, error) {
 	}, nil
 }
 
-func (command *Command)ReadParam(expectedType int) (string, error) {
+func (command *Command) ReadParam(expectedType int) (string, error) {
 	if len(command.body) < 4 {
 		return "", fmt.Errorf("No more parameters")
 	}
@@ -314,10 +315,10 @@ func (command *Command)ReadParam(expectedType int) (string, error) {
 		return "", fmt.Errorf("Expect type %v; got %v", expectedType, paramType)
 	}
 	paramLength := binary.LittleEndian.Uint16(command.body[2:4])
-	if int(paramLength) + 4 > len(command.body) {
-		return "", fmt.Errorf("Short command param; length was %v but only %v left", paramLength, len(command.body) - 4)
+	if int(paramLength)+4 > len(command.body) {
+		return "", fmt.Errorf("Short command param; length was %v but only %v left", paramLength, len(command.body)-4)
 	}
-	ret := string(command.body[4:4+paramLength])
+	ret := string(command.body[4 : 4+paramLength])
 	command.body = command.body[4+paramLength:]
 	return ret, nil
 }
@@ -326,16 +327,16 @@ func readStream(stream io.Reader, diff *Diff, channel chan error) {
 	input := bufio.NewReader(stream)
 	btrfsStreamHeader, err := input.ReadString('\x00')
 	if err != nil {
-		channel<-err
+		channel <- err
 		return
 	}
 	if btrfsStreamHeader[:len(btrfsStreamHeader)-1] != C.BTRFS_SEND_STREAM_MAGIC {
-		channel<-fmt.Errorf("magic is %v, not %v", btrfsStreamHeader, C.BTRFS_SEND_STREAM_MAGIC)
+		channel <- fmt.Errorf("magic is %v, not %v", btrfsStreamHeader, C.BTRFS_SEND_STREAM_MAGIC)
 		return
 	}
 	ver, err := peekAndDiscard(input, 4)
 	if err != nil || binary.LittleEndian.Uint32(ver) != 1 {
-		channel<-err
+		channel <- err
 		return
 	}
 	for true {
