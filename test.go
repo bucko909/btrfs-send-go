@@ -83,6 +83,7 @@ func initCommands() *[C.__BTRFS_SEND_C_MAX]CommandSpec {
 
 	commands[C.BTRFS_SEND_C_END] = CommandSpec{Name: "BTRFS_SEND_C_END", Op: OpEnd}
 	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = CommandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: OpModify}
+	// Sanity check (hopefully no holes).
 	for i, command := range commands {
 		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == OpUnspec {
 			return nil
@@ -361,6 +362,7 @@ func readStream(stream io.Reader, diff *Diff, channel chan error) {
 				channel <- err
 				return
 			}
+			fmt.Fprintf(os.Stdout, "TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
 			diff.rename(fromPath, toPath)
 		} else if command.Type.Op == OpEnd {
 			fmt.Fprintf(os.Stderr, "END\n")
@@ -372,71 +374,84 @@ func readStream(stream io.Reader, diff *Diff, channel chan error) {
 				channel <- err
 				return
 			}
+			fmt.Fprintf(os.Stdout, "TRACE %25v %v\n", command.Type.Name, path)
 			diff.tagPath(path, command.Type.Op)
 		}
 	}
 }
 
-func main() {
-	read, write, err := os.Pipe()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "pipe returned %v\n", err)
-		os.Exit(1)
-	}
-
-	root := "/disks/ssdbtrfs"
-	parent := os.Args[1]
-	child := os.Args[2]
-	root_f, err := os.OpenFile(root, os.O_RDONLY, 0777)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open returned %v\n", err)
-		os.Exit(1)
-	}
-	subvol_f, err := os.OpenFile(child, os.O_RDONLY, 0777)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "open returned %v\n", err)
-		os.Exit(1)
-	}
+func getSubvolUid(path string) (C.__u64, error) {
 	var sus C.struct_subvol_uuid_search
 	var subvol_info *C.struct_subvol_info
+	root_f, err := os.OpenFile(path, os.O_RDONLY, 0777)
+	if err != nil {
+		return 0, fmt.Errorf("open returned %v\n", err)
+	}
 	r := C.subvol_uuid_search_init(C.int(root_f.Fd()), &sus)
 	if r < 0 {
-		fmt.Fprintf(os.Stderr, "subvol_uuid_search_init returned %v\n", r)
-		os.Exit(1)
+		return 0, fmt.Errorf("subvol_uuid_search_init returned %v\n", r)
 	}
-	subvol_info, err = C.subvol_uuid_search(&sus, 0, nil, 0, C.CString(parent), C.subvol_search_by_path)
+	subvol_info, err = C.subvol_uuid_search(&sus, 0, nil, 0, C.CString(path), C.subvol_search_by_path)
 	if subvol_info == nil {
-		fmt.Fprintf(os.Stderr, "subvol_uuid_search returned %v\n", err)
+		return 0, fmt.Errorf("subvol_uuid_search returned %v\n", err)
+	}
+	return C.__u64(subvol_info.root_id), nil
+}
+
+func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
+	subvol_f, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
+	if err != nil {
+		return fmt.Errorf("open returned %v\n", err)
+	}
+	root_id, err := getSubvolUid(source)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "getSubvolUid returns %v\n", err)
 		os.Exit(1)
 	}
-	var root_id C.__u64 = C.__u64(subvol_info.root_id)
 	fmt.Fprintf(os.Stderr, "root_id %v\n", root_id)
-	//subvol_info = C.subvol_uuid_search(&sus, root_id, nil, 0, nil, C.subvol_search_by_root_id)
 	var subvol_fd C.uint = C.uint(subvol_f.Fd())
-
 	var opts C.struct_btrfs_ioctl_send_args
-	opts.send_fd = C.__s64(write.Fd())
+	opts.send_fd = C.__s64(stream.Fd())
 	opts.clone_sources = &root_id
 	opts.clone_sources_count = 1
 	opts.parent_root = root_id
 	opts.flags = C.BTRFS_SEND_FLAG_NO_FILE_DATA
-	channel := make(chan error)
-	var diff Diff = Diff{}
-	go readStream(read, &diff, channel)
-	r1, r2, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
-	fmt.Fprintf(os.Stderr, "ioctl returns %v %v %v\n", r1, r2, err)
-	err = <-channel
+	ret, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
+	if ret != 0 {
+		return err
+	}
+	return nil
+}
+
+func btrfsSendDiffs(source, subvolume string) (*Diff, error) {
+	read, write, err := os.Pipe()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "readStream returns %v\n", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("pipe returned %v\n", err)
 	}
 
-	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	//ret = C.btrfs_read_and_process_send_stream(C.int(os.Stdin.Fd()), &send_ops, unsafe.Pointer(&count), 1, 10)
-	//if ret < 0 {
-	//	fmt.Fprintf(os.Stderr, "btrfs_read_and_process_send_stream returned %v\n", ret)
-	//	os.Exit(1)
-	//}
+	var diff Diff = Diff{}
+	channel := make(chan error)
+	go readStream(read, &diff, channel)
+	err = btrfsSendSyscall(write, source, subvolume)
+	if err != nil {
+		return nil, fmt.Errorf("btrfsSendSyscall returns %v\n", err)
+	}
+	err = <-channel
+	if err != nil {
+		return nil, fmt.Errorf("readStream returns %v\n", err)
+	}
+	return &diff, nil
+}
+
+func main() {
+	//root := "/disks/ssdbtrfs"
+	parent := os.Args[1]
+	child := os.Args[2]
+
+	diff, err := btrfsSendDiffs(parent, child)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(1)
+	}
 	fmt.Fprintf(os.Stdout, "TRACE GENERATED\nTRACE %v\n", strings.Join(diff.Changes(), "\nTRACE "))
 }
